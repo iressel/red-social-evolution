@@ -10,5 +10,6 @@ var api = express.Router();//Para tener acceso a los métodos GET, POST, PUT, DE
 
 api.get('/home', UserController.home); //Llamamos al método GET y le pasamos como parámetros el path y la acción que corresponda del controlador.
 api.get('/pruebas',UserController.pruebas);
+api.post('/register',UserController.saveUser);
 
 module.exports = api;
