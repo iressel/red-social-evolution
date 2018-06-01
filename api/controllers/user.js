@@ -32,23 +32,39 @@ function saveUser(req, res){ //como todos los métodos voy a recibir una request
         user.role ='ROLE_USER';
         user.image = null;
         
-        bcrypt.hash(params.password, null, null, (err,hash) => {
-            user.password = hash;
+        //Control de usuarios duplicados
+        User.find({$or:[
+            {email: user.email.toLowerCase()},
+            {nick: user.nick.toLowerCase()}
+        ]}).exec((err, users) => {
+            
+            if(err) return res.status(500).send({message:'Error en la petición de usuarios.'});
+            
+            if(users && users.length >= 1){//si existe la tabla usuarios y tiene uno o más usuarios con ese email y nick
+                return res.status(200).send({message:'Ya existe un usuario con el email o nick que quiere registrar.'})
+            }
+            else
+            {
+                //cifra la password y me guarda los datos
+                bcrypt.hash(params.password, null, null, (err,hash) => {
+                    user.password = hash;
 
-            user.save((err, userStored) => {
-                //Acá utilizamos cláusula de guarda, si se cumple la condición ponemps return.
-                if (err) return res.status(500).send({message:'Se produjo un error al guardar el usuario.'});
-                //Compruebo si el userStored existe
-                if(userStored)
-                {
-                    res.status(200).send({user:userStored});
-                }
-                else
-                {
-                    res.status(404).send({message:'No se ha podido registrar el usuario.'});
-                }
-            });
-        });
+                    user.save((err, userStored) => {
+                        //Acá utilizamos cláusula de guarda, si se cumple la condición ponemps return.
+                        if (err) return res.status(500).send({message:'Se produjo un error al guardar el usuario.'});
+                        //Compruebo si el userStored existe
+                        if(userStored)
+                        {
+                            res.status(200).send({user:userStored});
+                        }
+                        else
+                        {
+                            res.status(404).send({message:'No se ha podido registrar el usuario.'});
+                        }
+                    });
+                });
+            }
+        })
     }
     else// si la condición no se cumple, enviamos una respuesta con un 200 que nos mande un json con un mensaje de campos obligatorios.
     {
@@ -57,6 +73,12 @@ function saveUser(req, res){ //como todos los métodos voy a recibir una request
         });
     }
 
+}
+
+function loginUser(req, res){
+    var params = req.body; //Tomamos todos los parámetros que me lleguen por POST
+    var email = params.email;
+    var password = params.password;
 }
 
 //Exporto todos mis métodos para ya poder acceder a ellos desde fuera de mi controller y debo crear la ruta en routes/user
